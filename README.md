@@ -7,7 +7,7 @@ The goals / steps of this project are the following:
 [//]: # (Image References)
 
 [image1]: ./Output/CTE_Vs_Time.png
-[image2]: ./Output/Steer_Angle_Vs_Time.png 
+[image2]: ./Output/Stering_Angle_Vs_Time.png 
 [image3]: ./Output/Throttle_Vs_Time.png
 [image4]: ./Output/Velocity_Vs_Time.png
 
@@ -16,7 +16,7 @@ The goals / steps of this project are the following:
 In this project vehicle in the simulator is controlled using MPC Controller, the main task is to implement the MPC controller and tune the parameters such that the vehcile does not cross the road limits. Source code provided by "UDACITY CarND MPC Project" was used as base for this project. 
 
 ### Modifications
-main.cpp , mpc.cpp are modified to implement MPC controller. FG_eval, operator, Solve , main() functions were modified to implement the controller . Modified code can be found [here] ("./Src")
+main.cpp , mpc.cpp are modified to implement MPC controller. FG_eval, operator, Solve , main() functions were modified to implement the controller . Modified code can be found [here] ("./src")
 
 ### Code Flow
 Following is brief description of the flow of the code.
