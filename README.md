@@ -1,108 +1,98 @@
-# CarND-Controls-MPC
-Self-Driving Car Engineer Nanodegree Program
+## **CarND Model Predicitive Control Project**
+
+The goals / steps of this project are the following:
+* Modify the code to make the car in the simulator drive autonomously without crossing the road limits for atleast one lap using Model Predicitive Control method.
+
+
+[//]: # (Image References)
+
+[image1]: ./Output/CTE_Vs_Time.png
+[image2]: ./Output/Steer_Angle_Vs_Time.png 
+[image3]: ./Output/Throttle_Vs_Time.png
+[image4]: ./Output/Velocity_Vs_Time.png
 
 ---
+### Writeup / README
+In this project vehicle in the simulator is controlled using MPC Controller, the main task is to implement the MPC controller and tune the parameters such that the vehcile does not cross the road limits. Source code provided by "UDACITY CarND MPC Project" was used as base for this project. 
 
-## Dependencies
+### Modifications
+main.cpp , mpc.cpp are modified to implement MPC controller. FG_eval, operator, Solve , main() functions were modified to implement the controller . Modified code can be found [here] ("./Src")
 
-* cmake >= 3.5
- * All OSes: [click here for installation instructions](https://cmake.org/install/)
-* make >= 4.1(mac, linux), 3.81(Windows)
-  * Linux: make is installed by default on most Linux distros
-  * Mac: [install Xcode command line tools to get make](https://developer.apple.com/xcode/features/)
-  * Windows: [Click here for installation instructions](http://gnuwin32.sourceforge.net/packages/make.htm)
-* gcc/g++ >= 5.4
-  * Linux: gcc / g++ is installed by default on most Linux distros
-  * Mac: same deal as make - [install Xcode command line tools]((https://developer.apple.com/xcode/features/)
-  * Windows: recommend using [MinGW](http://www.mingw.org/)
-* [uWebSockets](https://github.com/uWebSockets/uWebSockets)
-  * Run either `install-mac.sh` or `install-ubuntu.sh`.
-  * If you install from source, checkout to commit `e94b6e1`, i.e.
-    ```
-    git clone https://github.com/uWebSockets/uWebSockets
-    cd uWebSockets
-    git checkout e94b6e1
-    ```
-    Some function signatures have changed in v0.14.x. See [this PR](https://github.com/udacity/CarND-MPC-Project/pull/3) for more details.
+### Code Flow
+Following is brief description of the flow of the code.
+- Establish the connection with simulator.
+- Read the vehicle state and way points from websocket for one scan.
+- Convert Vehicle speed to Kmph from Miles Per Hour.
+- Predict the vehicle state after 100mSec.
+- Transform the way points to vehicle coordinates using the predicted state.
+- Fit curve and get the coefficients of the curve. 
+- Calculate CTE and PSI Error using the calculated coefficients.
+- Pass Vehicle State , CTE , PSI Error to MPC Solver. 
+- Send the steer_value and throttle value to Simulator.
 
-* **Ipopt and CppAD:** Please refer to [this document](https://github.com/udacity/CarND-MPC-Project/blob/master/install_Ipopt_CppAD.md) for installation instructions.
-* [Eigen](http://eigen.tuxfamily.org/index.php?title=Main_Page). This is already part of the repo so you shouldn't have to worry about it.
-* Simulator. You can download these from the [releases tab](https://github.com/udacity/self-driving-car-sim/releases).
-* Not a dependency but read the [DATA.md](./DATA.md) for a description of the data sent back from the simulator.
+Following is brief description of the flow of the MPC Solver.
+ - Initialize the constraints for control and vehicle states.
+ - Calculate the cost for control and vehicle states using operator. 
+ - Return the solution (Steering and Throttle for first point and x,y positions for all the points) to main function 
 
 
-## Basic Build Instructions
+### Code Implementation and Tuning Process
+Following is the code developement flow for this project. 
 
-1. Clone this repo.
-2. Make a build directory: `mkdir build && cd build`
-3. Compile: `cmake .. && make`
-4. Run it: `./mpc`.
+- I have started with solution provided in "Mind the Line" quiz. I was succesful the drive the car autonomously on a straight road with minor changes to the cost calculation , however car was uncontrollable at turns. 
+- As a second step i have changed rank of the polynomial that is being fitted for the way points. After this change vehicle was not even able to drive on the straight roads. After several trials i could not resolve the issues. 
+- I have referred the following post on UDACITY forum https://discussions.udacity.com/t/attn-read-before-beginning-project/492944/7. I have followed the suggestions in the post (i.e. to convert vehicle speed to kmph and to transform the coordinates). I was partially succesfull after this change. However vehicle movement was wavey, i have checked the project walk through videos and editted my code inline with the walk through. After this vehicle was able to complete the lap at max speed of 60MPH.
+- I was succesful in making the vehicle with an actuation delay of 100msec without prediciting the future state of the vehicle , however since it was a requirement of the project i have predicited the future state of the vehicle after 100msec using kinematic vehicle model. After this change vehicle movement was very unstable. I have changed the fg calculation method many times but i was not succesful in making the vehicle movement stable.
 
-## Tips
+Tuning Steps:
+- In tuning process primarily the factors multiplied to control parameter cost calculations were modified. 
+- This was a painstakingly long process, to make things easier i have started priting out control parameters steer_value, throttle and vehicle speed, cte values to a file. After every run these values were plotted in a graph. If any of the parameters were observed to be oscillating or staturating then the factors multiplied to diff or current value are increased. 
+- Following the above method i was able to make the vehicle movement stable however the vehicle speed was limited to 15MPH as throttle was severally damped. If the throttle was not damped vehicle became unstable if cost just included mean square of diff and actual value, equations shown below. 
 
-1. It's recommended to test the MPC on basic examples to see if your implementation behaves as desired. One possible example
-is the vehicle starting offset of a straight line (reference). If the MPC implementation is correct, after some number of timesteps
-(not too many) it should find and track the reference line.
-2. The `lake_track_waypoints.csv` file has the waypoints of the lake track. You could use this to fit polynomials and points and see of how well your model tracks curve. NOTE: This file might be not completely in sync with the simulator so your solution should NOT depend on it.
-3. For visualization this C++ [matplotlib wrapper](https://github.com/lava/matplotlib-cpp) could be helpful.)
-4.  Tips for setting up your environment are available [here](https://classroom.udacity.com/nanodegrees/nd013/parts/40f38239-66b6-46ec-ae68-03afd8a601c8/modules/0949fca6-b379-42af-a919-ee50aa304e6a/lessons/f758c44c-5e40-4e01-93b5-1a82aa4e044f/concepts/23d376c7-0195-4276-bdf0-e02f1f3c665d)
-5. **VM Latency:** Some students have reported differences in behavior using VM's ostensibly a result of latency.  Please let us know if issues arise as a result of a VM environment.
+  fg[0] += 2500*CppAD::pow(vars[delta_start + t], 2);
+  fg[0] += 200*CppAD::pow(vars[a_start + t], 2);
+  
+  fg[0] += 3000*CppAD::pow(vars[delta_start + t + 1] - vars[delta_start + t], 2);
+		fg[0] += 500*CppAD::pow(vars[a_start + t + 1] - vars[a_start + t], 2);
 
-## Editor Settings
 
-We've purposefully kept editor configuration files out of this repo in order to
-keep it as simple and environment agnostic as possible. However, we recommend
-using the following settings:
+To increase the speed i have reduced the damping factor and have added fourth power diff cost parameter as shown below. 
+  fg[0] += 2500*CppAD::pow(vars[delta_start + t], 2);
+  fg[0] += 200*CppAD::pow(vars[a_start + t], 2);
+  
+  fg[0] += 3000*CppAD::pow(vars[delta_start + t + 1] - vars[delta_start + t], 2);
+		fg[0] += 500*CppAD::pow(vars[a_start + t + 1] - vars[a_start + t], 2);
 
-* indent using spaces
-* set tab width to 2 spaces (keeps the matrices in source code aligned)
+  fg[0] += 5000*CppAD::pow(vars[delta_start + t + 1] - vars[delta_start + t], 4);
+		fg[0] += 500*CppAD::pow(vars[a_start + t + 1] - vars[a_start + t], 4);
 
-## Code Style
+After the above change speed increased to a maximum of 23MPH and vehicle was stable. I could not increase the vehicle with future state prediction any further. 
 
-Please (do your best to) stick to [Google's C++ style guide](https://google.github.io/styleguide/cppguide.html).
+### Output
+Following picutres the trend of Angle , Steering Value and CTE over time. 
 
-## Project Instructions and Rubric
+- CTE Vs Time 
 
-Note: regardless of the changes you make, your project must be buildable using
-cmake and make!
+![alt text][image1]
 
-More information is only accessible by people who are already enrolled in Term 2
-of CarND. If you are enrolled, see [the project page](https://classroom.udacity.com/nanodegrees/nd013/parts/40f38239-66b6-46ec-ae68-03afd8a601c8/modules/f1820894-8322-4bb3-81aa-b26b3c6dcbaf/lessons/b1ff3be0-c904-438e-aad3-2b5379f0e0c3/concepts/1a2255a0-e23c-44cf-8d41-39b8a3c8264a)
-for instructions and the project rubric.
+- Steering Value Vs Time
 
-## Hints!
+![alt text][image2]
 
-* You don't have to follow this directory structure, but if you do, your work
-  will span all of the .cpp files here. Keep an eye out for TODOs.
+- Throttle Vs Time 
 
-## Call for IDE Profiles Pull Requests
+![alt text][image3]
 
-Help your fellow students!
 
-We decided to create Makefiles with cmake to keep this project as platform
-agnostic as possible. Similarly, we omitted IDE profiles in order to we ensure
-that students don't feel pressured to use one IDE or another.
+- Vehicle Speed (KMPH) Vs Time 
 
-However! I'd love to help people get up and running with their IDEs of choice.
-If you've created a profile for an IDE that you think other students would
-appreciate, we'd love to have you add the requisite profile files and
-instructions to ide_profiles/. For example if you wanted to add a VS Code
-profile, you'd add:
+![alt text][image4]
 
-* /ide_profiles/vscode/.vscode
-* /ide_profiles/vscode/README.md
 
-The README should explain what the profile does, how to take advantage of it,
-and how to install it.
+- Simulator and Command Prompt Recording can be found [here]("./Output/Term2_P5_Output.mp4").
 
-Frankly, I've never been involved in a project with multiple IDE profiles
-before. I believe the best way to handle this would be to keep them out of the
-repo root to avoid clutter. My expectation is that most profiles will include
-instructions to copy files to a new location to get picked up by the IDE, but
-that's just a guess.
 
-One last note here: regardless of the IDE used, every submitted project must
-still be compilable with cmake and make./
-
-## How to write a README
-A well written README file can enhance your project and portfolio.  Develop your abilities to create professional README files by completing [this free course](https://www.udacity.com/course/writing-readmes--ud777).
+## Result 
+- MPC was tuned and vehicle movement was quite stable.
+- Vehicle was above to achieve a maximum speed of 23MPH (37KMPH).
+- Vehicle takes around 1Min 40Sec to finish a lap.
