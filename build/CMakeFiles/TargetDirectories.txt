@@ -1,0 +1,3 @@
+/mnt/84865074865068A6/Self_Driving/Term2/P5/FInal/build/CMakeFiles/edit_cache.dir
+/mnt/84865074865068A6/Self_Driving/Term2/P5/FInal/build/CMakeFiles/rebuild_cache.dir
+/mnt/84865074865068A6/Self_Driving/Term2/P5/FInal/build/CMakeFiles/mpc.dir
