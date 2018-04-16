@@ -97,7 +97,7 @@ Following picutres the trend of Angle , Steering Value and CTE over time.
 ![alt text][image3]
 
 
-- Vehicle Speed (KMPH) Vs Time 
+- Vehicle Speed (Meters Per Second) Vs Time 
 
 ![alt text][image4]
 
