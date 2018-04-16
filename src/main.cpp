@@ -17,7 +17,7 @@ using json = nlohmann::json;
 constexpr double pi() { return M_PI; }
 double deg2rad(double x) { return x * pi() / 180; }
 double rad2deg(double x) { return x * 180 / pi(); }
-double mph2kmph(double x) { return x *1.60934 ; }
+double mph2mtps(double x) { return x *0.44704; }
 
 
 // Checks if the SocketIO event has JSON data.
@@ -99,22 +99,9 @@ int main() {
           double v = j[1]["speed"];
           double steer_value = j[1]["steering_angle"];
           double throttle_value= j[1]["throttle"];
-          /*MPH to KMPH*/
-          v = mph2kmph(v);
+          /*MPH to Meters Per Second*/
+          v = mph2mtps(v);
 
-          /*predict vehicle position after 100mSec to account for acutation delay */
-          double act_delay = 0.1;
-          double Lf = 2.67;
-
-          double px_pred = px+v*cos(psi)*act_delay;
-          double py_pred = py+v*sin(psi)*act_delay;
-          double psi_pred = psi+v*steer_value/Lf*act_delay;
-          double v_pred = v+throttle_value*act_delay;
-
-          px = px_pred;
-          py = py_pred;
-          psi = psi_pred;
-          v = v_pred;
 
           /*Transform the points */
           for(unsigned int i=0;i<ptsx.size();i++)
@@ -125,6 +112,20 @@ int main() {
         	  ptsx[i] = off_x*cos(0-psi)-off_y*sin(0-psi);
         	  ptsy[i] = off_x*sin(0-psi)+off_y*cos(0-psi);
           }
+
+          /*predict vehicle position after 100mSec to account for acutation delay */
+  		  double act_delay = 0.1;
+		  double Lf = 2.67;
+
+		  double px_pred = px+v*cos(psi)*act_delay;
+		  double py_pred = py+v*sin(psi)*act_delay;
+		  double psi_pred = psi+v*steer_value/Lf*act_delay;
+		  double v_pred = v+throttle_value*act_delay;
+
+          px = px_pred;
+          py = py_pred;
+		  psi = psi_pred;
+		  v = v_pred;
 
 
           Eigen::VectorXd E_ptsx = Eigen::Map<Eigen::VectorXd, Eigen::Unaligned>(ptsx.data(), ptsx.size());
