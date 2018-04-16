@@ -22,7 +22,7 @@ main.cpp , mpc.cpp are modified to implement MPC controller. FG_eval, operator, 
 Following is brief description of code flow.
 - Establish the connection with simulator.
 - Read the vehicle state and way points from websocket for one scan.
-- Convert Vehicle speed to Kmph from Miles Per Hour.
+- Convert Vehicle speed to Meters Per Second from Miles Per Hour.
 - Predict the vehicle state after 100mSec.
 - Transform the way points to vehicle coordinates using the predicted state.
 - Fit curve and get the coefficients of the curve. 
