@@ -34,7 +34,34 @@ Following is brief description of MPC Solver flow.
  - Initialize the constraints for control and vehicle states.
  - Calculate the cost for control and vehicle states using operator. 
  - Return the solution (Steering and Throttle for first point and x,y positions for all the points) to main function 
-
+ 
+ ### Model Details
+ #### Inputs: 
+ Model was designed accept 6 inputs ,  following is list of inputs
+ - X: Vehicle X Coordinate
+ - Y: Vehicle Y Coordinate
+ - PSI: Vehicle Heading Angle 
+ - V: Velocity
+ - CTE: Difference between expected position and actual position
+ - EPSI : Error in PSI.
+ 
+ Following are 2 actuation inputs given to model
+ - delta : Steering Angle
+ - a : Vehicle Acceleration
+ 
+#### Output: 
+Model gives following actuation output
+- delta : Steering Angle adjustment to be applied
+- a : Vehicle Acceleration to be applied
+ 
+#### State Update Equation: 
+Following list of state update equations were used.
+- x_[t+1] = x[t] + v[t] * cos(psi[t]) * dt 
+- y_[t+1] = y[t] + v[t] * sin(psi[t]) * dt 
+- psi_[t+1] = psi[t] + v[t] / Lf * delta[t] * dt 
+- v_[t+1] = v[t] + a[t] * dt 
+- cte[t+1] = f(x[t]) - y[t] + v[t] * sin(epsi[t]) * dt 
+- epsi[t+1] = psi[t] - psides[t] + v[t] * delta[t] / Lf * dt
 
 ### Code Implementation and Tuning Process
 Following is the code developement flow for this project. 
@@ -45,29 +72,14 @@ Following is the code developement flow for this project.
 - I was succesful in making the vehicle with an actuation delay of 100msec without prediciting the future state of the vehicle , however since it was a requirement of the project i have predicited the future state of the vehicle after 100msec using kinematic vehicle model. After this change vehicle movement was very unstable. I have changed the fg calculation method many times but i was not succesful in making the vehicle movement stable. Refer tuning steps to understand the steps i followed to stabilize the vehicle.
 
 Tuning Steps:
-- In tuning process, primarily the factors multiplied to cost calculations of control parameters were modified. 
+- I have started the tuning process by choosing the correct N value, I began with N = 25 and dt = 0.05 but vehicle was very unstable. After refering the clues in the project i have decided to reduce N, so selected N = 10 and dt =0.1.
+- Next my primary focus was on the factors multiplied to cost calculations of control parameters. 
 - This was a painstakingly long process, to make things easier i have started priting out control parameters steer_value, throttle and vehicle speed, cte values to a file. After every run these values were plotted in a graph. If any of the parameters were observed to be oscillating or staturating then the factors multiplied to diff or current value are increased. 
-- Following the above method i was able to make the vehicle movement stable however the vehicle speed was limited to 15MPH as throttle was severely damped. If the throttle was not damped vehicle became unstable. If cost calculation had just mean square of diff and actual value ,equations shown below ,then i was not able to speed up the vehicle. 
+- Following the above method i was able to make the vehicle movement stable however i could reach an average speed of 23MPH, to increase the speed i have added a new cost equation to penalize when the vehicle psi changes drastically (i.e at the corners), refer below equation.
 
-  fg[0] += 2500*CppAD::pow(vars[delta_start + t], 2);
-  fg[0] += 200*CppAD::pow(vars[a_start + t], 2);
-  
-  fg[0] += 3000*CppAD::pow(vars[delta_start + t + 1] - vars[delta_start + t], 2);
-		fg[0] += 500*CppAD::pow(vars[a_start + t + 1] - vars[a_start + t], 2);
+fg[0] += 100*CppAD::pow(vars[epsi_start + t]- vars[epsi_start + t], 2);
 
-
-To increase the speed i have reduced the damping factor and have added fourth power diff cost parameter as shown below. 
-
-  fg[0] += 2500*CppAD::pow(vars[delta_start + t], 2);
-  fg[0] += 200*CppAD::pow(vars[a_start + t], 2);
-  
-  fg[0] += 3000*CppAD::pow(vars[delta_start + t + 1] - vars[delta_start + t], 2);
-		fg[0] += 500*CppAD::pow(vars[a_start + t + 1] - vars[a_start + t], 2);
-
-  fg[0] += 5000*CppAD::pow(vars[delta_start + t + 1] - vars[delta_start + t], 4);
-		fg[0] += 500*CppAD::pow(vars[a_start + t + 1] - vars[a_start + t], 4);
-
-After the above change speed increased to a maximum of 23MPH and vehicle was stable. I could not increase the vehicle with future state prediction any further. 
+After this change i was able to increase the speed to 37MPH. 
 
 ### Output
 Following picutres the trend of Angle , Steering Value and CTE over time. 
