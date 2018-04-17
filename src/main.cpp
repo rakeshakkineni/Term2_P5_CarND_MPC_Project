@@ -119,7 +119,7 @@ int main() {
 
 		  double px_pred = px+v*cos(psi)*act_delay;
 		  double py_pred = py+v*sin(psi)*act_delay;
-		  double psi_pred = psi+v*steer_value/Lf*act_delay;
+		  double psi_pred = psi-v*steer_value/Lf*act_delay;
 		  double v_pred = v+throttle_value*act_delay;
 
           px = px_pred;
